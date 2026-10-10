@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Production builds
+dist/
+*/dist/
+
+# Local databases
+*.db
+*.db-journal
+*.sqlite
+backend/dev.db
+backend/dev.db-journal
+
+# Environment secrets
+.env
+backend/.env
+frontend/.env
+*.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Environment configuration variants
+.env.*
+!.env.example
+
+# Test coverage reports
+coverage/

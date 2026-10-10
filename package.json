@@ -1,0 +1,26 @@
+{
+  "name": "shared-event-kit-booking-system",
+  "version": "1.0.0",
+  "description": "Production-Ready Shared Event Kit Booking & Handover Management System",
+  "private": true,
+  "scripts": {
+    "test": "npm test --prefix backend && npm test --prefix frontend",
+    "test:backend": "npm test --prefix backend",
+    "test:frontend": "npm test --prefix frontend",
+    "build": "npm run build --prefix backend && npm run build --prefix frontend",
+    "build:backend": "npm run build --prefix backend",
+    "build:frontend": "npm run build --prefix frontend",
+    "seed": "npm run seed --prefix backend",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend"
+  },
+  "keywords": [
+    "booking-system",
+    "event-kit",
+    "prisma",
+    "express",
+    "react",
+    "socket.io"
+  ],
+  "license": "ISC"
+}

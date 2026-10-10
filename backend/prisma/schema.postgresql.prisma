@@ -1,0 +1,234 @@
+// Production PostgreSQL Prisma Schema
+// Used for production deployments with PostgreSQL
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  CLUB_MEMBER
+  COORDINATOR
+}
+
+enum ItemType {
+  CAMERA
+  MIC
+  TRIPOD
+}
+
+enum KitItemState {
+  AVAILABLE
+  CHECKED_OUT
+  RETURNED_PENDING_INSPECTION
+  DAMAGED
+  MISSING
+  REPLACED
+}
+
+enum BookingStatus {
+  RESERVED
+  AT_RISK
+  CHECKED_OUT
+  RETURNED_PENDING_INSPECTION
+  COMPLETED
+  CANCELLED
+}
+
+enum ItemCondition {
+  USABLE
+  DAMAGED
+  MISSING
+}
+
+enum InspectionResult {
+  PASS
+  DAMAGED
+  MISSING
+}
+
+enum DisruptionStatus {
+  OPEN
+  RESOLVED
+  CANCELLED
+}
+
+enum WarningStatus {
+  PENDING
+  DELIVERED
+  FAILED
+}
+
+model User {
+  id           String         @id @default(uuid())
+  email        String         @unique
+  passwordHash String
+  name         String
+  role         Role           @default(CLUB_MEMBER)
+  clubId       String?
+  club         Club?          @relation(fields: [clubId], references: [id], onDelete: SetNull)
+  bookings     Booking[]
+  notifications Notification[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model Club {
+  id           String         @id @default(uuid())
+  name         String         @unique
+  code         String         @unique
+  contactEmail String
+  users        User[]
+  bookings     Booking[]
+  warnings     Warning[]
+  notifications Notification[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model Kit {
+  id          String         @id @default(uuid())
+  name        String
+  description String?
+  items       KitItem[]
+  bookings    Booking[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model KitItem {
+  id            String           @id @default(uuid())
+  kitId         String
+  kit           Kit              @relation(fields: [kitId], references: [id], onDelete: Cascade)
+  type          ItemType
+  serialNumber  String           @unique
+  state         KitItemState     @default(AVAILABLE)
+  conditionNote String?
+  inspections   InspectionRecord[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+}
+
+model Booking {
+  id                 String             @id @default(uuid())
+  kitId              String
+  kit                Kit                @relation(fields: [kitId], references: [id])
+  clubId             String
+  club               Club               @relation(fields: [clubId], references: [id])
+  userId             String
+  createdBy          User               @relation(fields: [userId], references: [id])
+  start              DateTime
+  end                DateTime
+  status             BookingStatus      @default(RESERVED)
+  riskReasons        String             @default("[]") // JSON string array of itemIds
+  checkedOutAt       DateTime?
+  returnedAt         DateTime?
+  handover           HandoverRecord?
+  inspections        InspectionRecord[]
+  sourceDisruptions  Disruption[]       @relation("SourceBooking")
+  affectedDisruptions Disruption[]      @relation("AffectedBooking")
+  warnings           Warning[]
+  notifications      Notification[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@index([start, end])
+  @@index([clubId])
+  @@index([status])
+}
+
+model HandoverRecord {
+  id            String    @id @default(uuid())
+  bookingId     String    @unique
+  booking       Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  coordinatorId String
+  checkoutAt    DateTime
+  checkoutItems String    // JSON string: Record<itemId, ItemCondition>
+  returnAt      DateTime?
+  returnItems   String?   // JSON string: Record<itemId, ItemCondition>
+  createdAt     DateTime  @default(now())
+}
+
+model InspectionRecord {
+  id            String           @id @default(uuid())
+  bookingId     String
+  booking       Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  itemId        String
+  item          KitItem          @relation(fields: [itemId], references: [id])
+  coordinatorId String
+  inspectedAt   DateTime         @default(now())
+  result        InspectionResult
+  notes         String?
+  createdAt     DateTime         @default(now())
+
+  @@index([bookingId])
+  @@index([itemId])
+}
+
+model Disruption {
+  id                 String           @id @default(uuid())
+  sourceBookingId    String
+  sourceBooking      Booking          @relation("SourceBooking", fields: [sourceBookingId], references: [id])
+  affectedBookingId  String
+  affectedBooking    Booking          @relation("AffectedBooking", fields: [affectedBookingId], references: [id])
+  affectedItemIds    String           // JSON string array of itemIds
+  status             DisruptionStatus @default(OPEN)
+  resolvedAt         DateTime?
+  warnings           Warning[]
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@index([affectedBookingId])
+  @@index([status])
+}
+
+model Warning {
+  id              String        @id @default(uuid())
+  bookingId       String
+  booking         Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  disruptionId    String
+  disruption      Disruption    @relation(fields: [disruptionId], references: [id], onDelete: Cascade)
+  recipientClubId String
+  recipientClub   Club          @relation(fields: [recipientClubId], references: [id])
+  status          WarningStatus @default(PENDING)
+  message         String
+  deliveredAt     DateTime?
+  createdAt       DateTime      @default(now())
+
+  @@index([bookingId])
+  @@index([disruptionId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clubId    String?
+  club      Club?    @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  bookingId String?
+  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([clubId])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String
+  actorRole  String
+  action     String
+  entityType String
+  entityId   String
+  details    String   // JSON string
+  timestamp  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+}
