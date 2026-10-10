@@ -105,13 +105,6 @@ Open your browser and navigate to:
 
 👉 **`http://localhost:5173`**
 
-The login screen includes **1-click quick-fill buttons** for all demo accounts:
-
-| Role | Name | Email | Password | Allowed Capabilities |
-| :--- | :--- | :--- | :--- | :--- |
-| **Coordinator** | Event Operations Coordinator | `coordinator@campus.edu` | `Coordinator123!` | Full kit management, checkout, returns, inspections, disruption resolution, replacement, cancel any booking. |
-| **Club Member** | Alex Rivera (Robotics Club) | `robotics_lead@campus.edu` | `ClubPass123!` | View availability, reserve whole kit, cancel own club bookings, receive disruption warnings. |
-| **Club Member** | Jordan Hayes (Drama Society) | `drama_lead@campus.edu` | `ClubPass123!` | View availability, reserve whole kit, cancel own club bookings, receive disruption warnings. |
 
 ---
 
